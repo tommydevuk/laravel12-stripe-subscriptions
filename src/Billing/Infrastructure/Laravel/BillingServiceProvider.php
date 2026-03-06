@@ -26,8 +26,14 @@ class BillingServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->mergeConfigFrom(
+            __DIR__.'/config/billing.php',
+            'billing'
+        );
+
         $this->app->singleton(StripeClient::class, function () {
-            return new StripeClient(config('services.stripe.secret'));
+            $secret = config('billing.stripe.secret') ?? config('services.stripe.secret');
+            return new StripeClient($secret);
         });
 
         $this->app->bind(PaymentGatewayInterface::class, StripePaymentGateway::class);
@@ -39,16 +45,25 @@ class BillingServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(__DIR__.'/../Persistence/Migrations');
 
+        $this->publishesMigrations([
+            __DIR__.'/../Persistence/Migrations' => database_path('migrations'),
+        ], 'billing-migrations');
+
+        $this->publishes([
+            __DIR__.'/config/billing.php' => config_path('billing.php'),
+        ], 'billing-config');
+
         $this->registerRoutes();
 
         ProductModel::observe(ProductObserver::class);
         PriceModel::observe(PriceObserver::class);
         \Billing\Infrastructure\Persistence\CustomerModel::observe(\Billing\Infrastructure\Stripe\Observers\CustomerObserver::class);
 
-        // make our console commands available when the provider is loaded
-        $this->commands([
-            \Billing\Infrastructure\Laravel\Console\Commands\StripeSyncCommand::class,
-        ]);
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Billing\Infrastructure\Laravel\Console\Commands\StripeSyncCommand::class,
+            ]);
+        }
 
         Event::listen(SubscriptionCreated::class, [BillingNotificationListener::class, 'handleSubscriptionCreated']);
         Event::listen(SubscriptionPriceChanged::class, [BillingNotificationListener::class, 'handlePriceChanged']);
