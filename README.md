@@ -66,7 +66,7 @@ A maintenance command is available to pull existing Stripe objects into your dat
 ./vendor/bin/sail artisan billing:stripe-sync
 ```
 
-The command will iterate over all products, prices, customers and subscriptions in your Stripe account and upsert local records.
+The command will iterate over all products, prices, customers and subscriptions in your Stripe account and upsert local records. It tolerates missing tables (e.g. before you've run migrations) by skipping sections instead of crashing.
 ## Architecture — Billing Bounded Context
 
 The project follows a strict Domain-Driven Design layout:

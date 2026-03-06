@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if(Schema::hasTable('webhook_calls')) {
+            return;
+        }
+
         Schema::create('webhook_calls', function (Blueprint $table) {
             $table->bigIncrements('id');
 

@@ -6,6 +6,7 @@ namespace Billing\Infrastructure\Stripe\Observers;
 
 use Billing\Infrastructure\Persistence\CustomerModel;
 use Billing\Infrastructure\Stripe\StripeSyncable;
+use Billing\Infrastructure\Stripe\StripeSyncState;
 use Stripe\StripeClient;
 use Throwable;
 
@@ -19,7 +20,7 @@ final class CustomerObserver
 
     public function created(CustomerModel $customer): void
     {
-        if (StripeSyncable::\$disabled) {
+        if (StripeSyncState::$disabled) {
             return;
         }
 
@@ -38,7 +39,7 @@ final class CustomerObserver
 
     public function updated(CustomerModel $customer): void
     {
-        if (StripeSyncable::\$disabled || empty($customer->stripe_id)) {
+        if (StripeSyncState::$disabled || empty($customer->stripe_id)) {
             return;
         }
 

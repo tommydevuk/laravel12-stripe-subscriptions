@@ -21,18 +21,38 @@ final class StripeSyncCommand extends Command
     {
         $this->info('Starting full Stripe-to-Laravel sync...');
 
-        $this->syncProducts($stripe);
-        $this->syncPrices($stripe);
-        $this->syncCustomers($stripe);
-        $this->syncSubscriptions($stripe);
+        $this->runSection('Syncing products', fn() => $this->syncProducts($stripe));
+        $this->runSection('Syncing prices', fn() => $this->syncPrices($stripe));
+        $this->runSection('Syncing customers', fn() => $this->syncCustomers($stripe));
+        $this->runSection('Syncing subscriptions', fn() => $this->syncSubscriptions($stripe));
 
         $this->info('Stripe sync complete.');
     }
 
+    /**
+     * Execute a callable and catch any table-not-found errors so the command can
+     * continue gracefully when run before migrations.
+     */
+    private function runSection(string $description, callable $callback): void
+    {
+        $this->info("{$description}...");
+
+        try {
+            $callback();
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (str_contains($e->getMessage(), 'Base table or view not found')) {
+                $this->warn("Skipping {$description}: {$e->getMessage()}");
+                return;
+            }
+
+            throw $e;
+        }
+
+        $this->info(ucfirst(str_replace('Syncing ', '', $description)).' synced.');
+    }
+
     private function syncProducts(StripeClient $stripe): void
     {
-        $this->info('Syncing products...');
-
         foreach ($stripe->products->all(['limit' => 100])->autoPagingIterator() as $prod) {
             ProductModel::withoutStripeSync(function () use ($prod): void {
                 ProductModel::updateOrCreate(
@@ -47,12 +67,10 @@ final class StripeSyncCommand extends Command
             });
         }
 
-        $this->info('Products synced.');
     }
 
     private function syncPrices(StripeClient $stripe): void
     {
-        $this->info('Syncing prices...');
 
         foreach ($stripe->prices->all(['limit' => 100])->autoPagingIterator() as $pr) {
             PriceModel::withoutStripeSync(function () use ($pr): void {
@@ -78,12 +96,10 @@ final class StripeSyncCommand extends Command
             });
         }
 
-        $this->info('Prices synced.');
     }
 
     private function syncCustomers(StripeClient $stripe): void
     {
-        $this->info('Syncing customers...');
 
         foreach ($stripe->customers->all(['limit' => 100])->autoPagingIterator() as $cust) {
             CustomerModel::withoutStripeSync(function () use ($cust): void {
@@ -98,12 +114,10 @@ final class StripeSyncCommand extends Command
             });
         }
 
-        $this->info('Customers synced.');
     }
 
     private function syncSubscriptions(StripeClient $stripe): void
     {
-        $this->info('Syncing subscriptions...');
 
         foreach ($stripe->subscriptions->all(['limit' => 100])->autoPagingIterator() as $sub) {
             SubscriptionModel::updateOrCreate(
@@ -116,6 +130,5 @@ final class StripeSyncCommand extends Command
             );
         }
 
-        $this->info('Subscriptions synced.');
     }
 }
