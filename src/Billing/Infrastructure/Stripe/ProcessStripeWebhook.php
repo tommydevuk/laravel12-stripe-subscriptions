@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace Billing\Infrastructure\Stripe;
 
+use Billing\Domain\Contracts\SubscriptionRepositoryInterface;
+use Billing\Domain\Events\SubscriptionPaymentFailed;
+use Billing\Domain\ValueObjects\SubscriptionStatus;
 use Billing\Infrastructure\Persistence\PriceModel;
 use Billing\Infrastructure\Persistence\ProductModel;
+use Illuminate\Support\Facades\Event;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob;
 
 class ProcessStripeWebhook extends ProcessWebhookJob
 {
-    public function handle(): void
+    public function handle(SubscriptionRepositoryInterface $repository): void
     {
         /** @var string $type */
         $type = $this->webhookCall->payload['type'];
@@ -18,7 +22,9 @@ class ProcessStripeWebhook extends ProcessWebhookJob
         $data = $this->webhookCall->payload['data']['object'];
 
         match ($type) {
-            'customer.subscription.updated' => $this->handleSubscriptionUpdated($data),
+            'customer.subscription.updated' => $this->handleSubscriptionUpdated($data, $repository),
+            'invoice.payment_succeeded', 'invoice.paid' => $this->handlePaymentSucceeded($data, $repository),
+            'invoice.payment_failed' => $this->handlePaymentFailed($data, $repository),
             'product.created', 'product.updated' => $this->handleProductSync($data),
             'price.created', 'price.updated' => $this->handlePriceSync($data),
             default => null,
@@ -28,10 +34,58 @@ class ProcessStripeWebhook extends ProcessWebhookJob
     /**
      * @param  array<string, mixed>  $data
      */
-    private function handleSubscriptionUpdated(array $data): void
+    private function handleSubscriptionUpdated(array $data, SubscriptionRepositoryInterface $repository): void
     {
-        // For brevity, we'll just handle status changes via the repository or another action
-        // In a real app, you might have an UpdateSubscription action
+        $subscription = $repository->findByGatewayId($data['id']);
+
+        if ($subscription) {
+            $subscription = $subscription->updatePlan(
+                $data['items']['data'][0]['plan']['id'],
+                SubscriptionStatus::from($data['status'])
+            );
+            $repository->save($subscription);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function handlePaymentSucceeded(array $data, SubscriptionRepositoryInterface $repository): void
+    {
+        if (! isset($data['subscription'])) {
+            return;
+        }
+
+        $subscription = $repository->findByGatewayId($data['subscription']);
+
+        if ($subscription) {
+            // Update status to active
+            $subscription = $subscription->updatePlan($subscription->planId, SubscriptionStatus::Active);
+            $repository->save($subscription);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function handlePaymentFailed(array $data, SubscriptionRepositoryInterface $repository): void
+    {
+        if (! isset($data['subscription'])) {
+            return;
+        }
+
+        $subscription = $repository->findByGatewayId($data['subscription']);
+
+        if ($subscription) {
+            $subscription = $subscription->updatePlan($subscription->planId, SubscriptionStatus::PastDue);
+            $repository->save($subscription);
+
+            // Dispatch event for retry/notification
+            Event::dispatch(new SubscriptionPaymentFailed(
+                subscription: $subscription,
+                reason: $data['billing_reason'] ?? 'Payment failed'
+            ));
+        }
     }
 
     /**

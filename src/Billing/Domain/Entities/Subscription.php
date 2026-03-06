@@ -32,4 +32,15 @@ class Subscription
             $gatewayId
         );
     }
+
+    public function updatePlan(string $newPlanId, SubscriptionStatus $newStatus): self
+    {
+        return new self(
+            $this->id,
+            $this->customerId,
+            $newPlanId,
+            $newStatus,
+            $this->gatewayId
+        );
+    }
 }

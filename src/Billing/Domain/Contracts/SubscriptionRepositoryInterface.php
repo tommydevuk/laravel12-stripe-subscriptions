@@ -9,4 +9,6 @@ use Billing\Domain\Entities\Subscription;
 interface SubscriptionRepositoryInterface
 {
     public function save(Subscription $subscription): void;
+
+    public function findByGatewayId(string $gatewayId): ?Subscription;
 }

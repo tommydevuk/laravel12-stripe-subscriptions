@@ -14,7 +14,9 @@ class StripeWebhookProfile implements WebhookProfile
         return in_array($request->json('type'), [
             'customer.subscription.created',
             'customer.subscription.updated',
+            'invoice.paid',
             'invoice.payment_failed',
+            'invoice.payment_succeeded',
             'product.created',
             'product.updated',
             'price.created',
