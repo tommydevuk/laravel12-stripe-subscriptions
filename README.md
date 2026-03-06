@@ -43,6 +43,7 @@ Send a `POST` request to `/api/subscriptions`:
 - **Payload**:
   ```json
   {
+    "customer_id": "cus_123456789",
     "plan_id": "price_H5ggY9IzS9s2a1",
     "payment_method_id": "pm_card_visa"
   }
