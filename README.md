@@ -100,3 +100,25 @@ To ensure code quality and project integrity:
 ---
 `composer lint && composer analyze`
 
+## Changelog
+
+This project follows a simple [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) style. Entries are grouped by version or date.
+
+### 2026‑03‑06
+
+- **feat:** introduced `billing:stripe-sync` CLI command to bulk import Stripe products, prices, customers, and subscriptions.
+- **fix:** handled missing database tables gracefully in sync command.
+- **fix:** cleaned duplicate logging output from command helper.
+- **test:** added feature test covering sync command; configured sqlite for testing.
+- **docs:** added CLI usage and resilience notes; created changelog.
+
+### Previous Work
+
+- Completed domain-driven billing context with product, price, subscription, and customer models.
+- Implemented webhook processing with idempotency, signature validation, and sync state guard.
+- Added subscription management features (create, update, refund, retry) and corresponding API endpoints.
+- Refactored code into `src/Billing` for packaging readiness.
+- Added Customer model with two-way Stripe synchronization.
+
+---
+
