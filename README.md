@@ -1,12 +1,21 @@
 # Stripe Billing DDD Integration
 
-A Laravel 12 implementation of a Stripe billing system using Domain-Driven Design (DDD).
+A Laravel 12 implementation of a Stripe billing system using Domain-Driven Design (DDD). This project demonstrates a clean, provider-agnostic approach to subscription management, including price modifications, partial refunds, and robust webhook processing.
+
+## Features
+
+- **Recurring Subscriptions**: Add users to recurring payment plans with confirmation logic.
+- **Price Modifications**: Update a subscription's periodic costs with automated user notifications.
+- **Partial Refunds**: Automatically issue refunds when a subscription's price decreases.
+- **Payment Retries**: Support for retrying failed payments via dedicated endpoints and webhook alerts.
+- **Clean Architecture**: Strict separation between Domain, Application, and Infrastructure layers.
+- **Webhook Integration**: Securely verified Stripe signatures and idempotent processing for `invoice.paid`, `customer.subscription.updated`, and more.
 
 ## Setup
 
 1. **Install Dependencies**:
    ```bash
-   composer install
+   ./vendor/bin/sail composer install
    ```
 
 2. **Environment Configuration**:
@@ -16,14 +25,21 @@ A Laravel 12 implementation of a Stripe billing system using Domain-Driven Desig
 
 3. **Database & Migrations**:
    ```bash
-   php artisan migrate
+   ./vendor/bin/sail artisan migrate
    ```
 
 ## Usage
 
-### Create a Subscription
+### Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/subscriptions` | Create a new subscription. |
+| `PATCH` | `/api/subscriptions/{id}` | Update an existing subscription (triggers price change logic). |
+| `POST` | `/api/subscriptions/retry` | Retry a failed payment for a specific invoice. |
+
+### Example: Create a Subscription
 Send a `POST` request to `/api/subscriptions`:
-- **Endpoint**: `POST /api/subscriptions`
 - **Payload**:
   ```json
   {
@@ -31,21 +47,46 @@ Send a `POST` request to `/api/subscriptions`:
     "payment_method_id": "pm_card_visa"
   }
   ```
-- **Auth**: Requires Sanctum authentication.
+
+### Example: Update a Subscription
+Send a `PATCH` request to `/api/subscriptions/sub_12345`:
+- **Payload**:
+  ```json
+  {
+    "plan_id": "price_NEW_PLAN_ID"
+  }
+  ```
+
+## Architecture — Billing Bounded Context
+
+The project follows a strict Domain-Driven Design layout:
+
+- **Domain**: Pure PHP entities (`Subscription`), Value Objects (`Money`, `SubscriptionStatus`), and Contracts (`PaymentGatewayInterface`). No framework dependencies.
+- **Application**: Orchestrates business logic via Actions (`CreateSubscription`, `UpdateSubscription`, `RetryPayment`) and DTOs.
+- **Infrastructure**: Implementation details for Stripe (`StripePaymentGateway`), persistence (`EloquentSubscriptionRepository`), and webhooks (`ProcessStripeWebhook`).
 
 ## Webhook Handling
 
 Webhooks are handled via `spatie/laravel-webhook-client`.
-- **Endpoint**: `/webhook-client-static/default` (Stripe points here).
-- **Processing**: `ProcessStripeWebhook` job parses the payload and executes the corresponding Domain Action (e.g., `CancelSubscription`).
-- **Profile**: `StripeWebhookProfile` filters events to ensure only relevant Stripe events are processed.
+- **Endpoint**: `/api/stripe-webhooks` (Configure Stripe to point here).
+- **Processing**: `ProcessStripeWebhook` job handles idempotent updates and dispatches domain events.
+- **Verification**: `StripeSignatureValidator` ensures payload integrity using the Stripe SDK.
 
-## Assumptions
+## Quality & Testing
 
-- **Architecture**: Strict DDD layers (Domain, Application, Infrastructure).
-- **Auth**: Users are authenticated via Laravel Sanctum.
-- **Provider**: Stripe is the primary payment gateway.
-- **Reliability**: Webhooks are the source of truth for subscription state updates.
+To ensure code quality and project integrity:
+
+```bash
+# Run PHPStan (Level 6)
+./vendor/bin/sail composer analyze
+
+# Run Pint (Linting)
+./vendor/bin/sail composer lint
+
+# Run Tests
+./vendor/bin/sail composer test
+```
 
 ---
 `composer lint && composer analyze`
+
