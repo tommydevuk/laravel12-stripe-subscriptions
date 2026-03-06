@@ -2,5 +2,5 @@
 
 return [
     App\Providers\AppServiceProvider::class,
-    App\Providers\BillingServiceProvider::class,
+    Billing\Infrastructure\Laravel\BillingServiceProvider::class,
 ];
