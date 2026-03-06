@@ -43,6 +43,12 @@ class BillingServiceProvider extends ServiceProvider
 
         ProductModel::observe(ProductObserver::class);
         PriceModel::observe(PriceObserver::class);
+        \Billing\Infrastructure\Persistence\CustomerModel::observe(\Billing\Infrastructure\Stripe\Observers\CustomerObserver::class);
+
+        // make our console commands available when the provider is loaded
+        $this->commands([
+            \Billing\Infrastructure\Laravel\Console\Commands\StripeSyncCommand::class,
+        ]);
 
         Event::listen(SubscriptionCreated::class, [BillingNotificationListener::class, 'handleSubscriptionCreated']);
         Event::listen(SubscriptionPriceChanged::class, [BillingNotificationListener::class, 'handlePriceChanged']);

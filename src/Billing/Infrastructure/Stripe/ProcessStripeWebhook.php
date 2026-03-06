@@ -7,6 +7,7 @@ namespace Billing\Infrastructure\Stripe;
 use Billing\Domain\Contracts\SubscriptionRepositoryInterface;
 use Billing\Domain\Events\SubscriptionPaymentFailed;
 use Billing\Domain\ValueObjects\SubscriptionStatus;
+use Billing\Infrastructure\Persistence\CustomerModel;
 use Billing\Infrastructure\Persistence\PriceModel;
 use Billing\Infrastructure\Persistence\ProductModel;
 use Illuminate\Support\Facades\Event;
@@ -22,6 +23,7 @@ class ProcessStripeWebhook extends ProcessWebhookJob
         $data = $this->webhookCall->payload['data']['object'];
 
         match ($type) {
+            'customer.created', 'customer.updated' => $this->handleCustomerSync($data),
             'customer.subscription.updated' => $this->handleSubscriptionUpdated($data, $repository),
             'invoice.payment_succeeded', 'invoice.paid' => $this->handlePaymentSucceeded($data, $repository),
             'invoice.payment_failed' => $this->handlePaymentFailed($data, $repository),
@@ -100,6 +102,23 @@ class ProcessStripeWebhook extends ProcessWebhookJob
                     'name' => $data['name'],
                     'description' => $data['description'] ?? null,
                     'active' => (bool) $data['active'],
+                    'metadata' => $data['metadata'] ?? [],
+                ]
+            );
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function handleCustomerSync(array $data): void
+    {
+        CustomerModel::withoutStripeSync(function () use ($data): void {
+            CustomerModel::updateOrCreate(
+                ['stripe_id' => $data['id']],
+                [
+                    'name' => $data['name'] ?? null,
+                    'email' => $data['email'] ?? null,
                     'metadata' => $data['metadata'] ?? [],
                 ]
             );

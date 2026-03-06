@@ -58,6 +58,15 @@ Send a `PATCH` request to `/api/subscriptions/sub_12345`:
   }
   ```
 
+### CLI Synchronisation
+A maintenance command is available to pull existing Stripe objects into your database. Useful when bootstrapping a new environment or recovering missed webhooks.
+
+```bash
+# run from the project root
+./vendor/bin/sail artisan billing:stripe-sync
+```
+
+The command will iterate over all products, prices, customers and subscriptions in your Stripe account and upsert local records.
 ## Architecture — Billing Bounded Context
 
 The project follows a strict Domain-Driven Design layout:
