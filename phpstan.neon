@@ -1,0 +1,9 @@
+parameters:
+    paths:
+        - app/
+        - database/
+        - tests/
+        - src/
+
+    # Level 5 is a great balance; Level 9 is the strictest.
+    level: 6
