@@ -16,11 +16,9 @@ class CreateSubscriptionController extends Controller
         CreateSubscriptionHttpRequest $request,
         CreateSubscription $action,
     ): JsonResponse {
-        $subscription = $action->execute(new CreateSubscriptionDTO(
-            customerId: $request->input('customer_id'),
-            planId: $request->input('plan_id'),
-            paymentMethodId: $request->input('payment_method_id'),
-        ));
+        $subscription = $action->execute(
+            CreateSubscriptionDTO::fromRequest($request)
+        );
 
         return response()->json($subscription, 201);
     }
