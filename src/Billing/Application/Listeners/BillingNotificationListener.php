@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Billing\Application\Listeners;
 
+use App\Models\User;
 use Billing\Domain\Events\SubscriptionCreated;
 use Billing\Domain\Events\SubscriptionPriceChanged;
-use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 final class BillingNotificationListener
@@ -27,7 +27,7 @@ final class BillingNotificationListener
         // Extract customer from subscription
         // In this simple implementation, we assume we can find the user via customer_id
         // In a real app, the event might carry the userId directly or we look it up.
-        
+
         Log::info("Subscription {$event->gatewaySubscriptionId} price changed from {$event->oldAmount} to {$event->newAmount} effective at {$event->effectiveAt}.");
     }
 }

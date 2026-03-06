@@ -71,7 +71,7 @@ class StripePaymentGateway implements PaymentGatewayInterface
                 'amount' => $amount,
             ]);
         } catch (Throwable $e) {
-            throw new PaymentFailedException("Refund failed: " . $e->getMessage(), (int) $e->getCode(), $e);
+            throw new PaymentFailedException('Refund failed: '.$e->getMessage(), (int) $e->getCode(), $e);
         }
     }
 
@@ -92,7 +92,7 @@ class StripePaymentGateway implements PaymentGatewayInterface
                 rawPayload: $stripeSubscription->toArray()
             );
         } catch (Throwable $e) {
-            throw new PaymentFailedException("Payment retry failed: " . $e->getMessage(), (int) $e->getCode(), $e);
+            throw new PaymentFailedException('Payment retry failed: '.$e->getMessage(), (int) $e->getCode(), $e);
         }
     }
 }

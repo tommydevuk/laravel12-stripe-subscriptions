@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Billing\Infrastructure\Http\Controllers;
 
-use Billing\Infrastructure\Http\Requests\UpdateSubscriptionHttpRequest;
 use Billing\Application\Actions\UpdateSubscription;
 use Billing\Application\DTOs\UpdateSubscriptionDTO;
+use Billing\Infrastructure\Http\Requests\UpdateSubscriptionHttpRequest;
 use Illuminate\Http\JsonResponse;
 
 final class UpdateSubscriptionController

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Billing\Application\DTOs;
 
-use App\Http\Requests\Subscriptions\CreateSubscriptionHttpRequest;
+use Billing\Infrastructure\Http\Requests\CreateSubscriptionHttpRequest;
 
 readonly class CreateSubscriptionDTO
 {

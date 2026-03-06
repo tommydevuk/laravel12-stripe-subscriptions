@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Billing\Infrastructure\Laravel;
 
+use Billing\Application\Listeners\BillingNotificationListener;
 use Billing\Domain\Contracts\PaymentGatewayInterface;
 use Billing\Domain\Contracts\PriceRepositoryInterface;
 use Billing\Domain\Contracts\SubscriptionRepositoryInterface;
+use Billing\Domain\Events\SubscriptionCreated;
+use Billing\Domain\Events\SubscriptionPriceChanged;
 use Billing\Infrastructure\Persistence\EloquentPriceRepository;
 use Billing\Infrastructure\Persistence\EloquentSubscriptionRepository;
 use Billing\Infrastructure\Persistence\PriceModel;
@@ -14,9 +17,6 @@ use Billing\Infrastructure\Persistence\ProductModel;
 use Billing\Infrastructure\Stripe\Observers\PriceObserver;
 use Billing\Infrastructure\Stripe\Observers\ProductObserver;
 use Billing\Infrastructure\Stripe\StripePaymentGateway;
-use Billing\Domain\Events\SubscriptionCreated;
-use Billing\Domain\Events\SubscriptionPriceChanged;
-use Billing\Application\Listeners\BillingNotificationListener;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -37,7 +37,7 @@ class BillingServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->loadMigrationsFrom(__DIR__ . '/../Persistence/Migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../Persistence/Migrations');
 
         $this->registerRoutes();
 
@@ -54,7 +54,7 @@ class BillingServiceProvider extends ServiceProvider
             'prefix' => 'api',
             'middleware' => 'api',
         ], function () {
-            $this->loadRoutesFrom(__DIR__ . '/routes.php');
+            $this->loadRoutesFrom(__DIR__.'/routes.php');
         });
     }
 }

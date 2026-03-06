@@ -1,8 +1,8 @@
 <?php
 
 use Billing\Infrastructure\Http\Controllers\CreateSubscriptionController;
-use Billing\Infrastructure\Http\Controllers\UpdateSubscriptionController;
 use Billing\Infrastructure\Http\Controllers\RetryPaymentController;
+use Billing\Infrastructure\Http\Controllers\UpdateSubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->prefix('subscriptions')->group(function () {

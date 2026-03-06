@@ -25,7 +25,7 @@ final class UpdateSubscription
         $subscription = $this->subscriptionRepository->findByGatewayId($dto->gatewaySubscriptionId);
 
         if (! $subscription) {
-            throw new SubscriptionException("Subscription not found.");
+            throw new SubscriptionException('Subscription not found.');
         }
 
         $oldPrice = $this->priceRepository->getPriceDetails($subscription->planId);
@@ -37,10 +37,10 @@ final class UpdateSubscription
         // Handle partial refund if price decreased
         if ($newPrice['amount'] < $oldPrice['amount']) {
             $difference = $oldPrice['amount'] - $newPrice['amount'];
-            
+
             // Get last payment intent if available to issue refund
             $paymentIntentId = $result->rawPayload['latest_invoice']['payment_intent']['id'] ?? null;
-            
+
             if ($paymentIntentId) {
                 $this->gateway->refund($paymentIntentId, $difference);
             }

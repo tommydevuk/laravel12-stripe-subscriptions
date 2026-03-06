@@ -6,7 +6,6 @@ namespace Billing\Application\Actions;
 
 use Billing\Domain\Contracts\PaymentGatewayInterface;
 use Billing\Domain\Contracts\SubscriptionRepositoryInterface;
-use Billing\Domain\Exceptions\SubscriptionException;
 
 final class RetryPayment
 {
